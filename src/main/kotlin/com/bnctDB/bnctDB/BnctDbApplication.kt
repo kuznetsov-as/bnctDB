@@ -8,6 +8,4 @@ class BnctDbApplication
 
 fun main(args: Array<String>) {
 	runApplication<BnctDbApplication>(*args)
-
-
 }

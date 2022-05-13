@@ -1,0 +1,192 @@
+alter table bnct
+    add "Охл. диаф./1/Верх (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./1/Право (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./1/Низ (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./1/Лево (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./2/Верх (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./2/Право (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./2/Низ (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./2/Лево (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./3/Верх (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./3/Право (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./3/Низ (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./3/Лево (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./4/Верх (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./4/Право (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./4/Низ (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./4/Лево (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./5/Верх (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./5/Право (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./5/Низ (°C)"  numeric;
+alter table bnct
+    add "Охл. диаф./5/Лево (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Ток (мА)"  numeric;
+alter table bnct
+    add "Li мишень/Центр (0) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Низ-право (1) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Право (2) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Верх-право (3) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Верх (4) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Верх-лево (5) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Лево (6) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Низ-лево (7) (°C)"  numeric;
+alter table bnct
+    add "Li мишень/Вода вход (л/мин)"  numeric;
+alter table bnct
+    add "Li мишень/Вода выход 1 (л/мин)"  numeric;
+alter table bnct
+    add "Li мишень/Вода выход 2 (л/мин)"  numeric;
+alter table bnct
+    add "Li мишень/Вакуум (Па)"  numeric;
+alter table bnct
+    add "Li мишень 9/Центр (0) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/М Право (1) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/Б Право (2) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/М Верх (3) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/Б Верх (4) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/М Лево (5) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/Б Лево (6) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/М Низ (7) (°C)"  numeric;
+alter table bnct
+    add "Li мишень 9/Б Низ (8) (°C)"  numeric;
+alter table bnct
+    add "Боп-1М/Б2/Зал/Гамма (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б2/Зал/Нейтроны (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б2/Кор/Гамма (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б2/Кор/Нейтроны (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б3/Зал/Гамма (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б3/Зал/Нейтроны (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б3/Кор/Гамма (Зв/Ч)"  numeric;
+alter table bnct
+    add "Боп-1М/Б3/Кор/Нейтроны (Зв/Ч)"  numeric;
+alter table bnct
+    add "Li6/Нейтроны (шт/сек)"  numeric;
+alter table bnct
+    add "Li6/Гамма (шт/сек)"  numeric;
+alter table bnct
+    add "Li6/Загрузка (%)"  numeric;
+alter table bnct
+    add "Li6/Интеграл нейтронов (шт)"  numeric;
+alter table bnct
+    add "Эфф. обдирки/Нейтралы I (мА)"  numeric;
+alter table bnct
+    add "Эфф. обдирки/Эфф. (%)"  numeric;
+alter table bnct
+    add "UltravoltPs/300V/U set (В)"  numeric;
+alter table bnct
+    add "UltravoltPs/300V/I set (мА)"  numeric;
+alter table bnct
+    add "UltravoltPs/300V/U get (В)"  numeric;
+alter table bnct
+    add "UltravoltPs/300V/I get (мА)"  numeric;
+alter table bnct
+    add "БДН/A/n (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/A/g (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/A/gn (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/A/gSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "БДН/A/nSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "БДН/B/n (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/B/g (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/B/gn (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/B/gSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "БДН/B/nSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "БДН/C/n (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/C/g (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/C/gn (шт/сек)"  numeric;
+alter table bnct
+    add "БДН/C/gSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "БДН/C/nSv (Зв/Ч)"  numeric;
+alter table bnct
+    add "Обдир миш/Слив (°C)"  numeric;
+alter table bnct
+    add "Обдир миш/Напор (°C)"  numeric;
+alter table bnct
+    add "Обдир миш/Мощность (Вт)"  numeric;
+alter table bnct
+    add "Обдир миш/Поток (л/мин)"  numeric;
+alter table bnct
+    add "Обдир миш/Аргон"  numeric;
+alter table bnct
+    add "HPGe/Мёртвое время (%)"  numeric;
+alter table bnct
+    add "HPGe/Скорость в интеграле (шт/сек)"  numeric;
+alter table bnct
+    add "HPGe/Интеграл (шт)"  numeric;
+alter table bnct
+    add "Вычислятор флюенса (Bergoz/HEBL/Ток)/Флюенс (мАч)"  numeric;
+alter table bnct
+    add "Вычислятор флюенса (ЭЛВ/Beam0)/Флюенс (мАч)"  numeric;
+alter table bnct
+    add "Вычислятор флюенса (Боп-1М/Б2/Зал/Гамма)/Флюенс (мАч)"  numeric;
+alter table bnct
+    add "Вычислятор флюенса (Боп-1М/Б2/Зал/Нейтроны)/Флюенс (мАч)"  numeric;
+alter table bnct
+    add "Вычислятор флюенса (Li6/Нейтроны)/Флюенс (мАч)"  numeric;
+alter table bnct
+    add "Ускоритель/Входная охлаждаемая диафрагма/Слив (°C)"  numeric;
+alter table bnct
+    add "Ускоритель/Входная охлаждаемая диафрагма/Напор (°C)"  numeric;
+alter table bnct
+    add "Ускоритель/Входная охлаждаемая диафрагма/Мощность (Вт)"  numeric;
+alter table bnct
+    add "Ускоритель/Входная охлаждаемая диафрагма/Поток (л/мин)"  numeric;
+alter table bnct
+    add "Вакуум/Ускоритель выход (Па)"  numeric;
+alter table bnct
+    add "Вакуум/HEBL После развертки (Па)"  numeric;
+alter table bnct
+    add "operatorPcDT"  numeric;
+alter table bnct
+    add "journal"  numeric;

@@ -1,0 +1,2 @@
+SELECT sum("ЭЛВ/Beam0 (мА)") FROM bnct WHERE DATE("Полная дата") = '2022-04-26';
+SELECT sum("ЭЛВ/Beam0 (мА)") FROM bnct WHERE DATE("Полная дата") = '2022-04-28'
