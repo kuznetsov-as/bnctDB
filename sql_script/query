@@ -1,2 +1,5 @@
-SELECT sum("ЭЛВ/Beam0 (мА)") FROM bnct WHERE DATE("Полная дата") = '2022-04-26';
-SELECT sum("ЭЛВ/Beam0 (мА)") FROM bnct WHERE DATE("Полная дата") = '2022-04-28'
+SELECT (sum("ЭЛВ/Beam0 (мА)") / 3600) FROM bnct WHERE DATE("Полная дата") = '2022-04-28' AND "ЭЛВ/Beam0 (мА)" > 0.07;
+SELECT (sum("ЭЛВ/Beam0 (мА)") / 3600) FROM bnct WHERE DATE("Полная дата") = '2022-04-26' AND "ЭЛВ/Beam0 (мА)" > 0.07;
+SELECT (sum("ЭЛВ/Beam0 (мА)") / 3600) FROM bnct WHERE DATE("Полная дата") = '2022-05-11' AND "ЭЛВ/Beam0 (мА)" > 0.07;
+
+

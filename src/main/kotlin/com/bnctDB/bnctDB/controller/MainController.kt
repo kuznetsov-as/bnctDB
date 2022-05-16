@@ -3,10 +3,10 @@ package com.bnctDB.bnctDB.controller
 import com.bnctDB.bnctDB.model.BnctData
 import com.bnctDB.bnctDB.model.FileProcessed
 import com.bnctDB.bnctDB.repository.BnctRepository
-import com.bnctDB.bnctDB.repository.filesRepository
+import com.bnctDB.bnctDB.repository.FilesRepository
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
-import org.apache.commons.csv.CSVRecord
+import org.jetbrains.annotations.NotNull
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,18 +15,18 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
-import java.text.NumberFormat
-import java.text.ParseException
+import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
 @Controller
 @RequestMapping("bnct")
-class MainController(val bnctRepository: BnctRepository, val filesRepository: filesRepository) {
+class MainController(val bnctRepository: BnctRepository, val filesRepository: FilesRepository) {
 
     var allHeaders = mutableListOf<MutableSet<String>>()
     var uniqueHeaders = setOf<MutableSet<String>>()
@@ -153,6 +153,31 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
         return ResponseEntity.ok("compare is done")
     }
 
+    fun recordToDouble(record: String): Double? {
+        return try {
+            BigDecimal(record.replace(",", ".")).toDouble()
+        } catch (e: NumberFormatException) {
+            null
+        }
+    }
+
+    fun parseDate(@NotNull date: String): LocalDateTime? {
+        return try {
+            LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss.SSS"))
+        } catch (e: DateTimeParseException) {
+            println("Не удалось распарсить $date, строка для этого времени будет пропущена")
+            return null
+        }
+    }
+
+    fun parseOperatorDate(date: String): LocalDateTime? {
+        return try {
+            LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm-ss"))
+        } catch (e: DateTimeParseException) {
+            return null
+        }
+    }
+
     fun getFileData(name: String, path: String, headers: MutableSet<String>): MutableList<BnctData> {
         val reader = BufferedReader(InputStreamReader(FileInputStream(path), "Windows-1251"))
 
@@ -164,164 +189,151 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
 
         val resultData = mutableListOf<BnctData>()
 
-        fun parseCSVtoDouble(csvRecord: CSVRecord, header: String): Double? {
-            val format = NumberFormat.getInstance(Locale.FRANCE)
-            return try {
-                format.parse(csvRecord.get(header)).toDouble()
-            } catch (e: ParseException) {
-                null
-            }
-        }
-
         for (csvRecord in csvParser) {
-            val dateAndTimePattern = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss.SSS")
-            val dateAndTime = LocalDateTime.parse(csvRecord.get("Полная дата"), dateAndTimePattern)
+            val dateAndTime = parseDate(csvRecord.get("Полная дата")) ?: continue
 
-            val operatorTimePattern = DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm-ss")
             var operatorDateAndTime: LocalDateTime? = null
-
             if (csvRecord.get("operatorPcDT").isNotEmpty()) {
-                //val date = csvRecord.get("operatorPcDT").replace("--", "@")
-                operatorDateAndTime = LocalDateTime.parse(csvRecord.get("operatorPcDT"), operatorTimePattern)
+                operatorDateAndTime = parseOperatorDate(csvRecord.get("operatorPcDT"))
             }
 
             val data = BnctData(
                 dateAndTime,
-                parseCSVtoDouble(csvRecord, "H-/Конус (мА)"),
-                parseCSVtoDouble(csvRecord, "H-/Линза Воблова/Слив (°C)"),
-                parseCSVtoDouble(csvRecord, "H-/Линза Воблова/Напор (°C)"),
-                parseCSVtoDouble(csvRecord, "H-/Линза Воблова/Мощность (Вт)"),
-                parseCSVtoDouble(csvRecord, "H-/Линза Воблова/Поток (л/мин)"),
-                parseCSVtoDouble(csvRecord, "H-/Напор IFM (л/мин)"),
-                parseCSVtoDouble(csvRecord, "H-/Слив IFM (л/мин)"),
-                parseCSVtoDouble(csvRecord, "H-/Источник (Па)"),
-                parseCSVtoDouble(csvRecord, "H-/Дифф. откачка (Па)"),
-                parseCSVtoDouble(csvRecord, "Bergoz/HEBL/Ток (мА)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Ток (мА)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Центр (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/М Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/М Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/М Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/М Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Б Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Б Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Б Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/1/Б Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Ток (мА)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Центр (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/М Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/М Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/М Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/М Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Б Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Б Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Б Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Конус/2/Б Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Энергия (кэВ)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Beam0 (мА)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/EnergyU get (кВ)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/EnergyU set (кВ)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/EnergyI (мА)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Avarage (мА)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Sec1U (кВ)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Sec1I (мА)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/IsolatorU (кВ)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/IsolatorI (мА)"),
-                parseCSVtoDouble(csvRecord, "ЭЛВ/Dark (мА)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./1/Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./1/Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./1/Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./1/Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./2/Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./2/Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./2/Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./2/Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./3/Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./3/Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./3/Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./3/Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./4/Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./4/Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./4/Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./4/Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./5/Верх (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./5/Право (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./5/Низ (°C)"),
-                parseCSVtoDouble(csvRecord, "Охл. диаф./5/Лево (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Ток (мА)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Центр (0) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Низ-право (1) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Право (2) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Верх-право (3) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Верх (4) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Верх-лево (5) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Лево (6) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Низ-лево (7) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Вода вход (л/мин)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Вода выход 1 (л/мин)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Вода выход 2 (л/мин)"),
-                parseCSVtoDouble(csvRecord, "Li мишень/Вакуум (Па)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/Центр (0) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/М Право (1) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/Б Право (2) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/М Верх (3) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/Б Верх (4) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/М Лево (5) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/Б Лево (6) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/М Низ (7) (°C)"),
-                parseCSVtoDouble(csvRecord, "Li мишень 9/Б Низ (8) (°C)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б2/Зал/Гамма (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б2/Зал/Нейтроны (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б2/Кор/Гамма (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б2/Кор/Нейтроны (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б3/Зал/Гамма (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б3/Зал/Нейтроны (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б3/Кор/Гамма (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Боп-1М/Б3/Кор/Нейтроны (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Li6/Нейтроны (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "Li6/Гамма (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "Li6/Загрузка (%)"),
-                parseCSVtoDouble(csvRecord, "Li6/Интеграл нейтронов (шт)"),
-                parseCSVtoDouble(csvRecord, "Эфф. обдирки/Нейтралы I (мА)"),
-                parseCSVtoDouble(csvRecord, "Эфф. обдирки/Эфф. (%)"),
-                parseCSVtoDouble(csvRecord, "UltravoltPs/300V/U set (В)"),
-                parseCSVtoDouble(csvRecord, "UltravoltPs/300V/I set (мА)"),
-                parseCSVtoDouble(csvRecord, "UltravoltPs/300V/U get (В)"),
-                parseCSVtoDouble(csvRecord, "UltravoltPs/300V/I get (мА)"),
-                parseCSVtoDouble(csvRecord, "БДН/A/n (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/A/g (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/A/gn (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/A/gSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "БДН/A/nSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "БДН/B/n (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/B/g (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/B/gn (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/B/gSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "БДН/B/nSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "БДН/C/n (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/C/g (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/C/gn (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "БДН/C/gSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "БДН/C/nSv (Зв/Ч)"),
-                parseCSVtoDouble(csvRecord, "Обдир миш/Слив (°C)"),
-                parseCSVtoDouble(csvRecord, "Обдир миш/Напор (°C)"),
-                parseCSVtoDouble(csvRecord, "Обдир миш/Мощность (Вт)"),
-                parseCSVtoDouble(csvRecord, "Обдир миш/Поток (л/мин)"),
-                parseCSVtoDouble(csvRecord, "Обдир миш/Аргон"),
-                parseCSVtoDouble(csvRecord, "HPGe/Мёртвое время (%)"),
-                parseCSVtoDouble(csvRecord, "HPGe/Скорость в интеграле (шт/сек)"),
-                parseCSVtoDouble(csvRecord, "HPGe/Интеграл (шт)"),
-                parseCSVtoDouble(csvRecord, "Вычислятор флюенса (Bergoz/HEBL/Ток)/Флюенс (мАч)"),
-                parseCSVtoDouble(csvRecord, "Вычислятор флюенса (ЭЛВ/Beam0)/Флюенс (мАч)"),
-                parseCSVtoDouble(csvRecord, "Вычислятор флюенса (Боп-1М/Б2/Зал/Гамма)/Флюенс (мАч)"),
-                parseCSVtoDouble(csvRecord, "Вычислятор флюенса (Боп-1М/Б2/Зал/Нейтроны)/Флюенс (мАч)"),
-                parseCSVtoDouble(csvRecord, "Вычислятор флюенса (Li6/Нейтроны)/Флюенс (мАч)"),
-                parseCSVtoDouble(csvRecord, "Ускоритель/Входная охлаждаемая диафрагма/Слив (°C)"),
-                parseCSVtoDouble(csvRecord, "Ускоритель/Входная охлаждаемая диафрагма/Напор (°C)"),
-                parseCSVtoDouble(csvRecord, "Ускоритель/Входная охлаждаемая диафрагма/Мощность (Вт)"),
-                parseCSVtoDouble(csvRecord, "Ускоритель/Входная охлаждаемая диафрагма/Поток (л/мин)"),
-                parseCSVtoDouble(csvRecord, "Вакуум/Ускоритель выход (Па)"),
-                parseCSVtoDouble(csvRecord, "Вакуум/HEBL После развертки (Па)"),
+                recordToDouble(csvRecord.get("H-/Конус (мА)")),
+                recordToDouble(csvRecord.get("H-/Линза Воблова/Слив (°C)")),
+                recordToDouble(csvRecord.get("H-/Линза Воблова/Напор (°C)")),
+                recordToDouble(csvRecord.get("H-/Линза Воблова/Мощность (Вт)")),
+                recordToDouble(csvRecord.get("H-/Линза Воблова/Поток (л/мин)")),
+                recordToDouble(csvRecord.get("H-/Напор IFM (л/мин)")),
+                recordToDouble(csvRecord.get("H-/Слив IFM (л/мин)")),
+                recordToDouble(csvRecord.get("H-/Источник (Па)")),
+                recordToDouble(csvRecord.get("H-/Дифф. откачка (Па)")),
+                recordToDouble(csvRecord.get("Bergoz/HEBL/Ток (мА)")),
+                recordToDouble(csvRecord.get("Конус/1/Ток (мА)")),
+                recordToDouble(csvRecord.get("Конус/1/Центр (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/М Верх (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/М Право (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/М Низ (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/М Лево (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/Б Верх (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/Б Право (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/Б Низ (°C)")),
+                recordToDouble(csvRecord.get("Конус/1/Б Лево (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/Ток (мА)")),
+                recordToDouble(csvRecord.get("Конус/2/Центр (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/М Верх (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/М Право (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/М Низ (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/М Лево (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/Б Верх (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/Б Право (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/Б Низ (°C)")),
+                recordToDouble(csvRecord.get("Конус/2/Б Лево (°C)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Энергия (кэВ)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Beam0 (мА)")),
+                recordToDouble(csvRecord.get("ЭЛВ/EnergyU get (кВ)")),
+                recordToDouble(csvRecord.get("ЭЛВ/EnergyU set (кВ)")),
+                recordToDouble(csvRecord.get("ЭЛВ/EnergyI (мА)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Avarage (мА)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Sec1U (кВ)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Sec1I (мА)")),
+                recordToDouble(csvRecord.get("ЭЛВ/IsolatorU (кВ)")),
+                recordToDouble(csvRecord.get("ЭЛВ/IsolatorI (мА)")),
+                recordToDouble(csvRecord.get("ЭЛВ/Dark (мА)")),
+                recordToDouble(csvRecord.get("Охл. диаф./1/Верх (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./1/Право (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./1/Низ (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./1/Лево (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./2/Верх (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./2/Право (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./2/Низ (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./2/Лево (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./3/Верх (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./3/Право (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./3/Низ (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./3/Лево (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./4/Верх (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./4/Право (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./4/Низ (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./4/Лево (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./5/Верх (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./5/Право (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./5/Низ (°C)")),
+                recordToDouble(csvRecord.get("Охл. диаф./5/Лево (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Ток (мА)")),
+                recordToDouble(csvRecord.get("Li мишень/Центр (0) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Низ-право (1) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Право (2) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Верх-право (3) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Верх (4) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Верх-лево (5) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Лево (6) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Низ-лево (7) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень/Вода вход (л/мин)")),
+                recordToDouble(csvRecord.get("Li мишень/Вода выход 1 (л/мин)")),
+                recordToDouble(csvRecord.get("Li мишень/Вода выход 2 (л/мин)")),
+                recordToDouble(csvRecord.get("Li мишень/Вакуум (Па)")),
+                recordToDouble(csvRecord.get("Li мишень 9/Центр (0) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/М Право (1) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/Б Право (2) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/М Верх (3) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/Б Верх (4) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/М Лево (5) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/Б Лево (6) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/М Низ (7) (°C)")),
+                recordToDouble(csvRecord.get("Li мишень 9/Б Низ (8) (°C)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б2/Зал/Гамма (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б2/Зал/Нейтроны (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б2/Кор/Гамма (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б2/Кор/Нейтроны (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б3/Зал/Гамма (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б3/Зал/Нейтроны (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б3/Кор/Гамма (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Боп-1М/Б3/Кор/Нейтроны (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Li6/Нейтроны (шт/сек)")),
+                recordToDouble(csvRecord.get("Li6/Гамма (шт/сек)")),
+                recordToDouble(csvRecord.get("Li6/Загрузка (%)")),
+                recordToDouble(csvRecord.get("Li6/Интеграл нейтронов (шт)")),
+                recordToDouble(csvRecord.get("Эфф. обдирки/Нейтралы I (мА)")),
+                recordToDouble(csvRecord.get("Эфф. обдирки/Эфф. (%)")),
+                recordToDouble(csvRecord.get("UltravoltPs/300V/U set (В)")),
+                recordToDouble(csvRecord.get("UltravoltPs/300V/I set (мА)")),
+                recordToDouble(csvRecord.get("UltravoltPs/300V/U get (В)")),
+                recordToDouble(csvRecord.get("UltravoltPs/300V/I get (мА)")),
+                recordToDouble(csvRecord.get("БДН/A/n (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/A/g (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/A/gn (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/A/gSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("БДН/A/nSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("БДН/B/n (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/B/g (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/B/gn (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/B/gSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("БДН/B/nSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("БДН/C/n (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/C/g (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/C/gn (шт/сек)")),
+                recordToDouble(csvRecord.get("БДН/C/gSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("БДН/C/nSv (Зв/Ч)")),
+                recordToDouble(csvRecord.get("Обдир миш/Слив (°C)")),
+                recordToDouble(csvRecord.get("Обдир миш/Напор (°C)")),
+                recordToDouble(csvRecord.get("Обдир миш/Мощность (Вт)")),
+                recordToDouble(csvRecord.get("Обдир миш/Поток (л/мин)")),
+                recordToDouble(csvRecord.get("Обдир миш/Аргон")),
+                recordToDouble(csvRecord.get("HPGe/Мёртвое время (%)")),
+                recordToDouble(csvRecord.get("HPGe/Скорость в интеграле (шт/сек)")),
+                recordToDouble(csvRecord.get("HPGe/Интеграл (шт)")),
+                recordToDouble(csvRecord.get("Вычислятор флюенса (Bergoz/HEBL/Ток)/Флюенс (мАч)")),
+                recordToDouble(csvRecord.get("Вычислятор флюенса (ЭЛВ/Beam0)/Флюенс (мАч)")),
+                recordToDouble(csvRecord.get("Вычислятор флюенса (Боп-1М/Б2/Зал/Гамма)/Флюенс (мАч)")),
+                recordToDouble(csvRecord.get("Вычислятор флюенса (Боп-1М/Б2/Зал/Нейтроны)/Флюенс (мАч)")),
+                recordToDouble(csvRecord.get("Вычислятор флюенса (Li6/Нейтроны)/Флюенс (мАч)")),
+                recordToDouble(csvRecord.get("Ускоритель/Входная охлаждаемая диафрагма/Слив (°C)")),
+                recordToDouble(csvRecord.get("Ускоритель/Входная охлаждаемая диафрагма/Напор (°C)")),
+                recordToDouble(csvRecord.get("Ускоритель/Входная охлаждаемая диафрагма/Мощность (Вт)")),
+                recordToDouble(csvRecord.get("Ускоритель/Входная охлаждаемая диафрагма/Поток (л/мин)")),
+                recordToDouble(csvRecord.get("Вакуум/Ускоритель выход (Па)")),
+                recordToDouble(csvRecord.get("Вакуум/HEBL После развертки (Па)")),
                 operatorDateAndTime,
                 csvRecord.get("journal")
             )
@@ -355,7 +367,7 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
 
         val headers: MutableSet<String>
         val files = TreeMap<String, String>()
-        val pathName = "D:\\BNCT_DATA"
+        val pathName = "D:\\1"
 
         File(pathName).walk().forEach {
             if (it.isFile) {
@@ -365,7 +377,12 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
             }
         }
 
-        headers = getActualHeaders(files.getValue(files.lastKey()))
+        if (files.isNotEmpty()) {
+            headers = getActualHeaders(files.getValue(files.lastKey()))
+        } else {
+            println("Не найдено новых файлов для переноса в бд")
+            return ResponseEntity.ok("Не найдено новых файлов для переноса в бд")
+        }
 
 
         val yellow = "\u001B[33m"
@@ -373,14 +390,16 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
 
         for ((name, path) in files) {
             val fileTimeout = System.currentTimeMillis()
-            println("$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset Начинаем работу " +
-                    "с файлом $name")
+            println(
+                "$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset Начинаем работу " +
+                        "с файлом $name"
+            )
 
             val resultData = getFileData(name, path, headers)
 
             println(
                 "$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset " +
-                        "всего обнаружено ${resultData.size} записей, начинаем перенос в базу данных"
+                        "всего обнаружено ${resultData.size} записей"
             )
 
             //val saveInDbTimeoutList = mutableListOf<Long>()
@@ -390,12 +409,19 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
             for (data in resultData) {
                 if (bnctRepository.findById(data.Polnaia_data!!).isPresent) {
                     existData.add(data)
-                    println("$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset В базе данных " +
-                            "уже существует запись с id: ${data.Polnaia_data}")
+                    println(
+                        "$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset В базе данных " +
+                                "уже существует запись с id: ${data.Polnaia_data}"
+                    )
                 }
             }
 
             resultData.removeAll(existData)
+
+            println(
+                "$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset " +
+                        "завершена проверка наличия данных в бд, начинаем перенос в базу данных"
+            )
 
             //val saveTimeout = System.currentTimeMillis()
             bnctRepository.saveAll(resultData)
@@ -434,6 +460,10 @@ class MainController(val bnctRepository: BnctRepository, val filesRepository: fi
             //println("---||Среднее время записи одной строки: $saveInDbResultTimeout миллисекунд")
         }
 
+        println(
+            "$yellow${SimpleDateFormat("hh:mm:ss").format(Date())}:$reset " +
+                    "Перенос данных завершен"
+        )
         return ResponseEntity.ok("move to DB is done")
     }
 }
